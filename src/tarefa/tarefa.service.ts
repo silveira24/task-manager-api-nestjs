@@ -15,14 +15,13 @@ export class TarefaService {
             throw new NotFoundException(`Usuário criador (id: ${dto.criadoPorId}) não encontrado.`);
         }
         
-        const promessas = dto.responsaveisIds.map(async (responsavelId) => {
-            const responsavel = await this.prisma.usuario.findUnique({ where: { id: responsavelId } });
-            if (! responsavel) {
-                throw new NotFoundException(`Usuário responsável (id: ${responsavelId}) não encontrado.`);
-            }
-            return responsavel;
+        const responsaveis = await this.prisma.usuario.findMany({
+            where: { id: { in: dto.responsaveisIds } }
         });
-        const responsaveis = await Promise.all(promessas);
+
+        if (responsaveis.length !== dto.responsaveisIds.length) {
+            throw new NotFoundException(`Um ou mais usuários responsáveis não foram encontrados.`);
+        }
 
         const tarefa = await this.prisma.tarefa.create({
             data: {
